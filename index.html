@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -64,25 +63,4 @@
         input.value = '';
         
         try {
-            const result = await model.generateContent(text);
-            const response = await result.response;
-            addMsg(response.text(), 'ai');
-        } catch (e) {
-            addMsg("Hata: " + e.message, 'ai');
-        }
-    }
-
-    function addMsg(text, type) {
-        const d = document.createElement('div');
-        d.className = `msg ${type}`;
-        d.innerText = text;
-        chatBox.appendChild(d);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    btn.onclick = chat;
-    input.onkeypress = (e) => { if(e.key === 'Enter') chat(); };
-</script>
-
-</body>
-</html>
+            const result = await model.generateContent
