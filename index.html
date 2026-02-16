@@ -3,100 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FixFlash AI</title>
+    <title>Fixing Viewer - PPTX Açıcı</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/css/pptxjs.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css">
+    
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #050505; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        #app { width: 95%; max-width: 500px; height: 85vh; background: #111; border-radius: 20px; display: flex; flex-direction: column; border: 2px solid #ffd700; overflow: hidden; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); }
-        header { padding: 20px; text-align: center; background: #1a1a1a; border-bottom: 1px solid #222; }
-        header h1 { margin: 0; color: #ffd700; font-size: 1.8rem; letter-spacing: 3px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #0a0a0a; }
-        .msg { padding: 12px 16px; border-radius: 12px; max-width: 85%; line-height: 1.5; font-size: 15px; animation: fadeIn 0.3s ease; word-wrap: break-word; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .user { background: #ffd700; color: #000; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
-        .ai { background: #222; color: #eee; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #333; }
-        #input-area { display: flex; padding: 20px; gap: 10px; background: #111; border-top: 1px solid #222; }
-        input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; outline: none; font-size: 16px; }
-        input:focus { border-color: #ffd700; }
-        button { background: #ffd700; border: none; padding: 0 25px; border-radius: 10px; cursor: pointer; font-weight: bold; color: #000; transition: all 0.2s; }
-        button:hover { background: #ffea00; transform: scale(1.05); }
-        button:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
+        /* SOFT BLACK TEMASI */
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1E1E1E;
+            --border-color: #333333;
+            --text-primary: #E0E0E0;
+            --text-secondary: #AAAAAA;
+            --accent-color: #BB86FC; /* Hafif mor/soft vurgu */
+            --accent-hover: #9965f4;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            background-color: var(--surface-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .brand-highlight {
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        /* DRAG & DROP ALANI */
+        #drop-zone {
+            width: 80%;
+            max-width: 800px;
+            height: 150px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            background-color: var(--surface-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        #drop-zone:hover, #drop-zone.dragover {
+            border-color: var(--accent-color);
+            background-color: #252525;
+            transform: scale(1.01);
+        }
+
+        #drop-zone p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        #drop-zone i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+            pointer-events: none;
+        }
+
+        /* Gizli input */
+        #file-input {
+            display: none;
+        }
+
+        /* GÖRÜNTÜLEYİCİ ALANI */
+        #viewer-container {
+            width: 90%;
+            max-width: 1200px;
+            min-height: 500px;
+            background-color: #ffffff; /* Slaytlar genellikle beyaz zeminli olduğu için iç kısım açık renk kalmalı */
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            margin-bottom: 50px;
+            display: none; /* Başlangıçta gizli */
+            color: #333; /* Slayt içi metin rengi */
+        }
+        
+        /* Tam Ekran Butonu */
+        .controls {
+            margin-bottom: 10px;
+            text-align: right;
+            width: 90%;
+            max-width: 1200px;
+            display: none;
+        }
+        
+        .btn {
+            background-color: var(--surface-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            border-color: var(--accent-color);
+        }
+
+        /* Yükleniyor Animasyonu */
+        .loader {
+            display: none;
+            border: 4px solid var(--surface-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
 
-<div id="app">
-    <header><h1>FIXFLASH</h1></header>
-    <div id="chat">
-        <div class="msg ai">Yeni enerji yüklendi! ⚡ <b>FixFlash</b> hazır. Ne sormak istersin?</div>
+    <header>
+        <h1><span class="brand-highlight">Fixing</span> Viewer</h1>
+    </header>
+
+    <div id="drop-zone">
+        <i>&#128193;</i> <p>PPTX dosyanızı buraya sürükleyin veya tıklayın</p>
+        <input type="file" id="file-input" accept=".pptx">
     </div>
-    <div id="input-area">
-        <input type="text" id="userInput" placeholder="Hızlıca bir şeyler sor..." autocomplete="off">
-        <button id="sendBtn">GÖNDER</button>
+
+    <div class="loader" id="loader"></div>
+
+    <div class="controls" id="controls">
+        <button class="btn" onclick="location.reload()">Yeni Dosya Aç</button>
     </div>
-</div>
 
-<script type="module">
-    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+    <div id="viewer-container">
+        <div id="result"></div>
+    </div>
 
-    // Yeni API Anahtarın buraya eklendi
-    const API_KEY = "AIzaSyAqsaU1B_2gJXV85AwwYhRG2dRjSWT3deY";
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    
-    // Grafikteki 404 hatasını aşmak için en güncel model ismini kullanıyoruz
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/pptxjs.min.js"></script>
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const viewerContainer = document.getElementById('viewer-container');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const controls = document.getElementById('controls');
 
-    const chatContainer = document.getElementById('chat');
-    const inputField = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
+        // Tıklama ile dosya seçme
+        dropZone.addEventListener('click', () => fileInput.click());
 
-    async function sendMessage() {
-        const text = inputField.value.trim();
-        if (!text || sendBtn.disabled) return;
-
-        addMessage(text, 'user');
-        inputField.value = '';
-        
-        // Spam koruması ve görsel geri bildirim
-        sendBtn.disabled = true;
-        inputField.disabled = true;
-
-        try {
-            const result = await model.generateContent(text);
-            const response = await result.response;
-            const aiText = response.text();
-            addMessage(aiText, 'ai');
-        } catch (error) {
-            console.error("Detaylı Hata:", error);
-            // Hata mesajını daha anlaşılır hale getirelim
-            if (error.message.includes("404")) {
-                addMessage("Hata: Model bulunamadı (404). Lütfen API Studio'dan Gemini 1.5 Flash'ın aktif olduğunu kontrol et.", 'ai');
-            } else if (error.message.includes("429")) {
-                addMessage("Hata: Çok hızlı gidiyoruz! (429). Lütfen bir saniye bekle.", 'ai');
-            } else {
-                addMessage("Hata: " + error.message, 'ai');
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
             }
-        } finally {
-            sendBtn.disabled = false;
-            inputField.disabled = false;
-            inputField.focus();
+        });
+
+        // Sürükle Bırak Olayları
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            // Sadece pptx kontrolü
+            if (file.name.split('.').pop().toLowerCase() !== 'pptx') {
+                alert("Lütfen geçerli bir .pptx dosyası yükleyin!");
+                return;
+            }
+
+            // UI Güncelleme
+            dropZone.style.display = 'none';
+            loader.style.display = 'block';
+
+            // PPTXjs Ayarları
+            $("#result").pptxToHtml({
+                pptxFileUrl: "", 
+                fileInputId: "",
+                slideMode: false, 
+                keyBoardShortCut: false,
+                slideModeConfig: {  // Slayt modu ayarları
+                    first: 1, 
+                    nav: false, 
+                    navTxtColor: "white", 
+                    keyBoardShortCut: false, 
+                    showSlideNum: false, 
+                    showTotalSlideNum: false, 
+                    autoSlide: false, 
+                    randomAutoSlide: false, 
+                    loop: false, 
+                    background: "black", 
+                    transition: "default", 
+                    transitionTime: 1
+                }
+            });
+
+            // Dosyayı okuma ve kütüphaneye gönderme
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // pptxjs kütüphanesi jQuery ve blob mantığıyla çalışır
+                // Doğrudan okunan buffer'ı kütüphaneye iletiyoruz
+                /* Not: PPTXjs normalde bir URL veya Input ID bekler. 
+                   Burada Blob URL oluşturup kütüphaneye vereceğiz.
+                */
+                
+                try {
+                    const blob = new Blob([new Uint8Array(e.target.result)], {type: file.type});
+                    const url = URL.createObjectURL(blob);
+
+                    $("#result").html(""); // Temizle
+                    
+                    // Kütüphaneyi Blob URL ile tetikle
+                    $("#result").pptxToHtml({
+                        pptxFileUrl: url,
+                        slidesScale: "100%", 
+                        slideMode: false, 
+                        keyBoardShortCut: false
+                    });
+
+                    // Yükleme tamamlanınca
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        viewerContainer.style.display = 'block';
+                        controls.style.display = 'block';
+                    }, 1000);
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Dosya okunurken bir hata oluştu.");
+                    loader.style.display = 'none';
+                    dropZone.style.display = 'flex';
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
         }
-    }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixing Viewer - PPTX Açıcı</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/css/pptxjs.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css">
+    
+    <style>
+        /* SOFT BLACK TEMASI */
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1E1E1E;
+            --border-color: #333333;
+            --text-primary: #E0E0E0;
+            --text-secondary: #AAAAAA;
+            --accent-color: #BB86FC; /* Hafif mor/soft vurgu */
+            --accent-hover: #9965f4;
+        }
 
-    function addMessage(text, type) {
-        const div = document.createElement('div');
-        div.className = `msg ${type}`;
-        div.innerText = text;
-        chatContainer.appendChild(div);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    // Olay Dinleyicileri
-    sendBtn.addEventListener('click', sendMessage);
-    inputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-</script>
+        /* HEADER */
+        header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            background-color: var(--surface-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
 
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .brand-highlight {
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        /* DRAG & DROP ALANI */
+        #drop-zone {
+            width: 80%;
+            max-width: 800px;
+            height: 150px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            background-color: var(--surface-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        #drop-zone:hover, #drop-zone.dragover {
+            border-color: var(--accent-color);
+            background-color: #252525;
+            transform: scale(1.01);
+        }
+
+        #drop-zone p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        #drop-zone i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+            pointer-events: none;
+        }
+
+        /* Gizli input */
+        #file-input {
+            display: none;
+        }
+
+        /* GÖRÜNTÜLEYİCİ ALANI */
+        #viewer-container {
+            width: 90%;
+            max-width: 1200px;
+            min-height: 500px;
+            background-color: #ffffff; /* Slaytlar genellikle beyaz zeminli olduğu için iç kısım açık renk kalmalı */
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            margin-bottom: 50px;
+            display: none; /* Başlangıçta gizli */
+            color: #333; /* Slayt içi metin rengi */
+        }
+        
+        /* Tam Ekran Butonu */
+        .controls {
+            margin-bottom: 10px;
+            text-align: right;
+            width: 90%;
+            max-width: 1200px;
+            display: none;
+        }
+        
+        .btn {
+            background-color: var(--surface-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            border-color: var(--accent-color);
+        }
+
+        /* Yükleniyor Animasyonu */
+        .loader {
+            display: none;
+            border: 4px solid var(--surface-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><span class="brand-highlight">Fixing</span> Viewer</h1>
+    </header>
+
+    <div id="drop-zone">
+        <i>&#128193;</i> <p>PPTX dosyanızı buraya sürükleyin veya tıklayın</p>
+        <input type="file" id="file-input" accept=".pptx">
+    </div>
+
+    <div class="loader" id="loader"></div>
+
+    <div class="controls" id="controls">
+        <button class="btn" onclick="location.reload()">Yeni Dosya Aç</button>
+    </div>
+
+    <div id="viewer-container">
+        <div id="result"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/pptxjs.min.js"></script>
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const viewerContainer = document.getElementById('viewer-container');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const controls = document.getElementById('controls');
+
+        // Tıklama ile dosya seçme
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Sürükle Bırak Olayları
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            // Sadece pptx kontrolü
+            if (file.name.split('.').pop().toLowerCase() !== 'pptx') {
+                alert("Lütfen geçerli bir .pptx dosyası yükleyin!");
+                return;
+            }
+
+            // UI Güncelleme
+            dropZone.style.display = 'none';
+            loader.style.display = 'block';
+
+            // PPTXjs Ayarları
+            $("#result").pptxToHtml({
+                pptxFileUrl: "", 
+                fileInputId: "",
+                slideMode: false, 
+                keyBoardShortCut: false,
+                slideModeConfig: {  // Slayt modu ayarları
+                    first: 1, 
+                    nav: false, 
+                    navTxtColor: "white", 
+                    keyBoardShortCut: false, 
+                    showSlideNum: false, 
+                    showTotalSlideNum: false, 
+                    autoSlide: false, 
+                    randomAutoSlide: false, 
+                    loop: false, 
+                    background: "black", 
+                    transition: "default", 
+                    transitionTime: 1
+                }
+            });
+
+            // Dosyayı okuma ve kütüphaneye gönderme
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // pptxjs kütüphanesi jQuery ve blob mantığıyla çalışır
+                // Doğrudan okunan buffer'ı kütüphaneye iletiyoruz
+                /* Not: PPTXjs normalde bir URL veya Input ID bekler. 
+                   Burada Blob URL oluşturup kütüphaneye vereceğiz.
+                */
+                
+                try {
+                    const blob = new Blob([new Uint8Array(e.target.result)], {type: file.type});
+                    const url = URL.createObjectURL(blob);
+
+                    $("#result").html(""); // Temizle
+                    
+                    // Kütüphaneyi Blob URL ile tetikle
+                    $("#result").pptxToHtml({
+                        pptxFileUrl: url,
+                        slidesScale: "100%", 
+                        slideMode: false, 
+                        keyBoardShortCut: false
+                    });
+
+                    // Yükleme tamamlanınca
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        viewerContainer.style.display = 'block';
+                        controls.style.display = 'block';
+                    }, 1000);
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Dosya okunurken bir hata oluştu.");
+                    loader.style.display = 'none';
+                    dropZone.style.display = 'flex';
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
 </body>
 </html>
