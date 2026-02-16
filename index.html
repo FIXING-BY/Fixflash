@@ -1,576 +1,259 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixing Viewer - PPTX Açıcı</title>
+    <title>Fixing Viewer V2 - PPTX Açıcı</title>
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/css/pptxjs.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/css/pptxjs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css">
     
     <style>
-        /* SOFT BLACK TEMASI */
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1E1E1E;
-            --border-color: #333333;
-            --text-primary: #E0E0E0;
-            --text-secondary: #AAAAAA;
-            --accent-color: #BB86FC; /* Hafif mor/soft vurgu */
-            --accent-hover: #9965f4;
-        }
-
+        /* SOFT BLACK TEMA */
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #181818;
+            color: #e0e0e0;
+            font-family: sans-serif;
             margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* HEADER */
-        header {
-            width: 100%;
-            padding: 20px 0;
-            text-align: center;
-            background-color: var(--surface-color);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
-        }
-
         h1 {
             font-weight: 300;
             letter-spacing: 2px;
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .brand-highlight {
-            font-weight: 600;
-            color: var(--accent-color);
-        }
-
-        /* DRAG & DROP ALANI */
-        #drop-zone {
-            width: 80%;
-            max-width: 800px;
-            height: 150px;
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            background-color: var(--surface-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-bottom: 30px;
-        }
-
-        #drop-zone:hover, #drop-zone.dragover {
-            border-color: var(--accent-color);
-            background-color: #252525;
-            transform: scale(1.01);
-        }
-
-        #drop-zone p {
-            color: var(--text-secondary);
-            font-size: 16px;
-            pointer-events: none;
-        }
-
-        #drop-zone i {
-            font-size: 40px;
-            margin-bottom: 10px;
-            color: var(--accent-color);
-            pointer-events: none;
-        }
-
-        /* Gizli input */
-        #file-input {
-            display: none;
-        }
-
-        /* GÖRÜNTÜLEYİCİ ALANI */
-        #viewer-container {
-            width: 90%;
-            max-width: 1200px;
-            min-height: 500px;
-            background-color: #ffffff; /* Slaytlar genellikle beyaz zeminli olduğu için iç kısım açık renk kalmalı */
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            margin-bottom: 50px;
-            display: none; /* Başlangıçta gizli */
-            color: #333; /* Slayt içi metin rengi */
-        }
-        
-        /* Tam Ekran Butonu */
-        .controls {
-            margin-bottom: 10px;
-            text-align: right;
-            width: 90%;
-            max-width: 1200px;
-            display: none;
-        }
-        
-        .btn {
-            background-color: var(--surface-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn:hover {
-            border-color: var(--accent-color);
-        }
-
-        /* Yükleniyor Animasyonu */
-        .loader {
-            display: none;
-            border: 4px solid var(--surface-color);
-            border-top: 4px solid var(--accent-color);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
             margin-top: 20px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* SÜRÜKLE BIRAK ALANI */
+        #drop-area {
+            border: 2px dashed #444;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            padding: 40px;
+            text-align: center;
+            background-color: #222;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 20px;
         }
 
+        #drop-area:hover {
+            background-color: #333;
+            border-color: #777;
+        }
+
+        #drop-area.highlight {
+            border-color: #BB86FC;
+            background-color: #2a2a2a;
+        }
+
+        /* GÖRÜNTÜLEYİCİ */
+        #slide-viewer {
+            width: 90%;
+            height: 600px; /* Sabit yükseklik verelim */
+            background: #fff; /* Slaytlar için beyaz zemin şart */
+            color: #000;
+            border-radius: 5px;
+            overflow: auto;
+            display: none; /* Başlangıçta gizli */
+            position: relative;
+        }
+
+        /* Kontrol Butonları */
+        .controls {
+            display: none;
+            margin-bottom: 10px;
+            width: 90%;
+            text-align: right;
+        }
+
+        button {
+            background: #BB86FC;
+            border: none;
+            padding: 8px 15px;
+            color: #000;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        #error-msg {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+            background: rgba(255,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        /* Gizli Input */
+        #upload-input {
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            color: #BB86FC;
+            margin: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1><span class="brand-highlight">Fixing</span> Viewer</h1>
-    </header>
+    <h1>Fixing Viewer <span style="font-size:0.6em; color:#777;">V2</span></h1>
 
-    <div id="drop-zone">
-        <i>&#128193;</i> <p>PPTX dosyanızı buraya sürükleyin veya tıklayın</p>
-        <input type="file" id="file-input" accept=".pptx">
+    <div id="drop-area">
+        <p style="font-size: 24px;">📂</p>
+        <p>PPTX Dosyasını Buraya Sürükle veya Tıkla</p>
+        <span style="font-size: 12px; color: #888;">(Dosya yerel olarak işlenir, sunucuya yüklenmez)</span>
     </div>
 
-    <div class="loader" id="loader"></div>
+    <div id="error-msg"></div>
 
-    <div class="controls" id="controls">
-        <button class="btn" onclick="location.reload()">Yeni Dosya Aç</button>
+    <div class="loading">Slaytlar ayrıştırılıyor, lütfen bekleyin...</div>
+
+    <div class="controls">
+        <button onclick="location.reload()">Yeni Dosya</button>
+        <button id="fullscreen-btn">Tam Ekran</button>
     </div>
 
-    <div id="viewer-container">
-        <div id="result"></div>
-    </div>
+    <div id="slide-viewer"></div>
+
+    <input type="file" id="upload-input" accept=".pptx">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/pptxjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/pptxjs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.js"></script>
+
     <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const viewerContainer = document.getElementById('viewer-container');
-        const resultDiv = document.getElementById('result');
-        const loader = document.getElementById('loader');
-        const controls = document.getElementById('controls');
-
-        // Tıklama ile dosya seçme
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
-        // Sürükle Bırak Olayları
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
+        $(document).ready(function() {
             
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        function handleFile(file) {
-            // Sadece pptx kontrolü
-            if (file.name.split('.').pop().toLowerCase() !== 'pptx') {
-                alert("Lütfen geçerli bir .pptx dosyası yükleyin!");
-                return;
-            }
-
-            // UI Güncelleme
-            dropZone.style.display = 'none';
-            loader.style.display = 'block';
-
-            // PPTXjs Ayarları
-            $("#result").pptxToHtml({
-                pptxFileUrl: "", 
-                fileInputId: "",
-                slideMode: false, 
-                keyBoardShortCut: false,
-                slideModeConfig: {  // Slayt modu ayarları
-                    first: 1, 
-                    nav: false, 
-                    navTxtColor: "white", 
-                    keyBoardShortCut: false, 
-                    showSlideNum: false, 
-                    showTotalSlideNum: false, 
-                    autoSlide: false, 
-                    randomAutoSlide: false, 
-                    loop: false, 
-                    background: "black", 
-                    transition: "default", 
-                    transitionTime: 1
-                }
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('upload-input');
+            const errorMsg = document.getElementById('error-msg');
+            
+            // --- 1. Tıklama ile Seçim ---
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
             });
 
-            // Dosyayı okuma ve kütüphaneye gönderme
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // pptxjs kütüphanesi jQuery ve blob mantığıyla çalışır
-                // Doğrudan okunan buffer'ı kütüphaneye iletiyoruz
-                /* Not: PPTXjs normalde bir URL veya Input ID bekler. 
-                   Burada Blob URL oluşturup kütüphaneye vereceğiz.
-                */
-                
-                try {
-                    const blob = new Blob([new Uint8Array(e.target.result)], {type: file.type});
-                    const url = URL.createObjectURL(blob);
+            // --- 2. Sürükle Bırak Efektleri ---
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
 
-                    $("#result").html(""); // Temizle
-                    
-                    // Kütüphaneyi Blob URL ile tetikle
-                    $("#result").pptxToHtml({
-                        pptxFileUrl: url,
-                        slidesScale: "100%", 
-                        slideMode: false, 
-                        keyBoardShortCut: false
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+            });
+
+            // --- 3. Dosya Bırakıldığında ---
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                let dt = e.dataTransfer;
+                let files = dt.files;
+                if(files.length > 0) {
+                    // Güvenlik kısıtlamaları nedeniyle input'un files değerini doğrudan atayamayız
+                    // Ancak DataTransfer ile modern tarayıcılarda bu mümkün
+                    fileInput.files = files; 
+                    // Change eventini manuel tetikle
+                    $(fileInput).trigger('change');
+                }
+            }
+
+            // --- 4. Input Değişince (Asıl İşlem) ---
+            $('#upload-input').on('change', function(e) {
+                const file = this.files[0];
+                
+                if (!file) return;
+                if (!file.name.endsWith('.pptx')) {
+                    showError("Lütfen sadece .pptx uzantılı dosya seçin.");
+                    return;
+                }
+
+                // UI Temizle
+                $('#drop-area').hide();
+                $('.loading').show();
+                $('#error-msg').hide();
+
+                try {
+                    // PPTXjs Kütüphanesini Başlat
+                    // fileInputId parametresi, kütüphanenin dosyayı kendisinin okumasını sağlar
+                    $("#slide-viewer").pptxToHtml({
+                        fileInputId: "upload-input",
+                        slideMode: false,
+                        keyBoardShortCut: true,
+                        mediaProcess: true, 
+                        jsZipV2: false,
+                        slideModeConfig: {  
+                            first: 1, 
+                            nav: true, 
+                            navTxtColor: "black", 
+                            showSlideNum: true, 
+                            showTotalSlideNum: true, 
+                            autoSlide: false, 
+                            randomAutoSlide: false, 
+                            loop: false, 
+                            background: "white", 
+                            transition: "default", 
+                            transitionTime: 1
+                        }
                     });
 
-                    // Yükleme tamamlanınca
+                    // İşlem bitince UI güncelle (Kütüphanenin callback'i olmadığı için timeout ile hile yapıyoruz)
                     setTimeout(() => {
-                        loader.style.display = 'none';
-                        viewerContainer.style.display = 'block';
-                        controls.style.display = 'block';
-                    }, 1000);
+                        $('.loading').hide();
+                        $('#slide-viewer').fadeIn();
+                        $('.controls').fadeIn();
+                        
+                        // İçerik kontrolü
+                        if($('#slide-viewer').html().trim() === "") {
+                             // Eğer boşsa muhtemelen hata olmuştur
+                             showError("Slayt ayrıştırılamadı. Dosya bozuk olabilir veya tarayıcı güvenlik kısıtlaması (CORS) engelliyor olabilir.");
+                             $('#drop-area').show();
+                        }
+                    }, 1500);
 
                 } catch (err) {
                     console.error(err);
-                    alert("Dosya okunurken bir hata oluştu.");
-                    loader.style.display = 'none';
-                    dropZone.style.display = 'flex';
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-    </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixing Viewer - PPTX Açıcı</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/css/pptxjs.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css">
-    
-    <style>
-        /* SOFT BLACK TEMASI */
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1E1E1E;
-            --border-color: #333333;
-            --text-primary: #E0E0E0;
-            --text-secondary: #AAAAAA;
-            --accent-color: #BB86FC; /* Hafif mor/soft vurgu */
-            --accent-hover: #9965f4;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        /* HEADER */
-        header {
-            width: 100%;
-            padding: 20px 0;
-            text-align: center;
-            background-color: var(--surface-color);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .brand-highlight {
-            font-weight: 600;
-            color: var(--accent-color);
-        }
-
-        /* DRAG & DROP ALANI */
-        #drop-zone {
-            width: 80%;
-            max-width: 800px;
-            height: 150px;
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            background-color: var(--surface-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-bottom: 30px;
-        }
-
-        #drop-zone:hover, #drop-zone.dragover {
-            border-color: var(--accent-color);
-            background-color: #252525;
-            transform: scale(1.01);
-        }
-
-        #drop-zone p {
-            color: var(--text-secondary);
-            font-size: 16px;
-            pointer-events: none;
-        }
-
-        #drop-zone i {
-            font-size: 40px;
-            margin-bottom: 10px;
-            color: var(--accent-color);
-            pointer-events: none;
-        }
-
-        /* Gizli input */
-        #file-input {
-            display: none;
-        }
-
-        /* GÖRÜNTÜLEYİCİ ALANI */
-        #viewer-container {
-            width: 90%;
-            max-width: 1200px;
-            min-height: 500px;
-            background-color: #ffffff; /* Slaytlar genellikle beyaz zeminli olduğu için iç kısım açık renk kalmalı */
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            margin-bottom: 50px;
-            display: none; /* Başlangıçta gizli */
-            color: #333; /* Slayt içi metin rengi */
-        }
-        
-        /* Tam Ekran Butonu */
-        .controls {
-            margin-bottom: 10px;
-            text-align: right;
-            width: 90%;
-            max-width: 1200px;
-            display: none;
-        }
-        
-        .btn {
-            background-color: var(--surface-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn:hover {
-            border-color: var(--accent-color);
-        }
-
-        /* Yükleniyor Animasyonu */
-        .loader {
-            display: none;
-            border: 4px solid var(--surface-color);
-            border-top: 4px solid var(--accent-color);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin-top: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1><span class="brand-highlight">Fixing</span> Viewer</h1>
-    </header>
-
-    <div id="drop-zone">
-        <i>&#128193;</i> <p>PPTX dosyanızı buraya sürükleyin veya tıklayın</p>
-        <input type="file" id="file-input" accept=".pptx">
-    </div>
-
-    <div class="loader" id="loader"></div>
-
-    <div class="controls" id="controls">
-        <button class="btn" onclick="location.reload()">Yeni Dosya Aç</button>
-    </div>
-
-    <div id="viewer-container">
-        <div id="result"></div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/pptxjs.min.js"></script>
-    <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const viewerContainer = document.getElementById('viewer-container');
-        const resultDiv = document.getElementById('result');
-        const loader = document.getElementById('loader');
-        const controls = document.getElementById('controls');
-
-        // Tıklama ile dosya seçme
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
-        // Sürükle Bırak Olayları
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        function handleFile(file) {
-            // Sadece pptx kontrolü
-            if (file.name.split('.').pop().toLowerCase() !== 'pptx') {
-                alert("Lütfen geçerli bir .pptx dosyası yükleyin!");
-                return;
-            }
-
-            // UI Güncelleme
-            dropZone.style.display = 'none';
-            loader.style.display = 'block';
-
-            // PPTXjs Ayarları
-            $("#result").pptxToHtml({
-                pptxFileUrl: "", 
-                fileInputId: "",
-                slideMode: false, 
-                keyBoardShortCut: false,
-                slideModeConfig: {  // Slayt modu ayarları
-                    first: 1, 
-                    nav: false, 
-                    navTxtColor: "white", 
-                    keyBoardShortCut: false, 
-                    showSlideNum: false, 
-                    showTotalSlideNum: false, 
-                    autoSlide: false, 
-                    randomAutoSlide: false, 
-                    loop: false, 
-                    background: "black", 
-                    transition: "default", 
-                    transitionTime: 1
+                    showError("Bir hata oluştu: " + err.message);
+                    $('.loading').hide();
+                    $('#drop-area').show();
                 }
             });
 
-            // Dosyayı okuma ve kütüphaneye gönderme
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // pptxjs kütüphanesi jQuery ve blob mantığıyla çalışır
-                // Doğrudan okunan buffer'ı kütüphaneye iletiyoruz
-                /* Not: PPTXjs normalde bir URL veya Input ID bekler. 
-                   Burada Blob URL oluşturup kütüphaneye vereceğiz.
-                */
-                
-                try {
-                    const blob = new Blob([new Uint8Array(e.target.result)], {type: file.type});
-                    const url = URL.createObjectURL(blob);
-
-                    $("#result").html(""); // Temizle
-                    
-                    // Kütüphaneyi Blob URL ile tetikle
-                    $("#result").pptxToHtml({
-                        pptxFileUrl: url,
-                        slidesScale: "100%", 
-                        slideMode: false, 
-                        keyBoardShortCut: false
-                    });
-
-                    // Yükleme tamamlanınca
-                    setTimeout(() => {
-                        loader.style.display = 'none';
-                        viewerContainer.style.display = 'block';
-                        controls.style.display = 'block';
-                    }, 1000);
-
-                } catch (err) {
-                    console.error(err);
-                    alert("Dosya okunurken bir hata oluştu.");
-                    loader.style.display = 'none';
-                    dropZone.style.display = 'flex';
+            // Tam ekran butonu
+            $('#fullscreen-btn').click(function() {
+                const elem = document.getElementById("slide-viewer");
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
                 }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
+            });
+
+            function showError(msg) {
+                $('#error-msg').text(msg).show();
+            }
+        });
     </script>
 </body>
 </html>
