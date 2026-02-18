@@ -2,76 +2,81 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Fixing Viewer - v2</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@master/css/pptxjs.css">
+    <title>Fixing Viewer - Ultra Stable</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/css/pptxjs.css">
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --accent: #BB86FC; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
-        header { padding: 20px; background: var(--card); border-bottom: 2px solid var(--accent); }
-        #drop-zone { 
-            margin: 50px auto; width: 80%; max-width: 500px; height: 200px; 
-            border: 2px dashed #444; border-radius: 20px; display: flex; 
-            align-items: center; justify-content: center; cursor: pointer;
-        }
-        #result { background: white; margin: 20px; border-radius: 10px; min-height: 500px; display: none; }
-        #loading { display: none; color: var(--accent); margin-top: 20px; }
-        .brand { color: var(--accent); font-weight: bold; }
+        body { background-color: #121212; color: #E0E0E0; font-family: sans-serif; text-align: center; margin: 0; }
+        header { background: #1E1E1E; padding: 20px; border-bottom: 2px solid #BB86FC; }
+        .brand { color: #BB86FC; font-weight: bold; font-size: 1.5rem; }
+        #drop-area { margin: 50px auto; width: 70%; height: 150px; border: 2px dashed #444; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #loader { display: none; color: #BB86FC; font-size: 1.2rem; margin-top: 20px; }
+        /* Slaytların görüneceği alan - İçerik için beyaz zemin */
+        #slide-viewer { width: 90%; margin: 20px auto; background: white; color: black; min-height: 500px; display: none; border-radius: 10px; overflow: hidden; }
     </style>
 </head>
 <body>
 
-<header><span class="brand">FIXING</span> VIEWER PRO</header>
+    <header><span class="brand">FIXING</span> VIEWER</header>
 
-<div id="drop-zone" onclick="document.getElementById('pptx-input').click()">
-    <div>PPTX Dosyasını Buraya Bırak veya Seç</div>
-</div>
+    <div id="drop-area" onclick="document.getElementById('file-input').click()">
+        PPTX Dosyasını Seç veya Buraya Bırak
+    </div>
 
-<input type="file" id="pptx-input" accept=".pptx" style="display:none;">
-<div id="loading">Fixing Motoru Hazırlanıyor...</div>
-<div id="result"></div>
+    <input type="file" id="file-input" accept=".pptx" style="display:none;">
+    
+    <div id="loader">Fixing Motoru İşleniyor...</div>
+    
+    <div id="slide-viewer"></div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@master/js/pptxjs.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@master/js/divs2slides.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/pptxjs.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/divs2slides.js"></script>
 
-<script>
-    $(document).ready(function() {
-        const $input = $("#pptx-input");
-        const $result = $("#result");
-        const $loading = $("#loading");
+    <script>
+        $(document).ready(function() {
+            const $input = $("#file-input");
+            const $viewer = $("#slide-viewer");
+            const $loader = $("#loader");
 
-        $input.on("change", function(e) {
-            const file = e.target.files[0];
-            if(!file) return;
+            $input.on("change", function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
 
-            $("#drop-zone").hide();
-            $loading.show();
+                $("#drop-area").hide();
+                $loader.show();
 
-            // PPTXjs doğrudan file objesiyle bazen sorun yaşayabiliyor
-            // Bu yüzden "fileInputId" üzerinden gitmek en garantisi
-            $result.pptxToHtml({
-                fileInputId: "pptx-input",
-                slideMode: false,
-                keyBoardShortCut: true,
-                success: function() {
-                    $loading.hide();
-                    $result.show();
-                },
-                error: function(err) {
-                    $loading.hide();
-                    alert("Yükleme başarısız. Konsol hatasına bak.");
-                    console.log("Hata detayı:", err);
-                }
+                // Manuel FileReader ile veriyi Blob'a çevirip yükleme
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const arrayBuffer = event.target.result;
+                    const blob = new Blob([arrayBuffer], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
+                    const fileUrl = URL.createObjectURL(blob);
+
+                    $viewer.pptxToHtml({
+                        pptxFileUrl: fileUrl,
+                        slideMode: false,
+                        keyBoardShortCut: true,
+                        success: function() {
+                            $loader.hide();
+                            $viewer.fadeIn();
+                            console.log("Fixing Başarılı!");
+                        },
+                        error: function(err) {
+                            $loader.hide();
+                            console.error("Hata:", err);
+                            alert("Fixing Motoru bu dosyayı açamadı. Lütfen başka bir PPTX dene.");
+                            location.reload();
+                        }
+                    });
+                };
+                reader.readAsArrayBuffer(file);
             });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
-
