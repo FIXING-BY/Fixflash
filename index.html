@@ -2,194 +2,76 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixing Viewer - Pro</title>
-
+    <title>Fixing Viewer - v2</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@master/css/pptxjs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/css/pptxjs.css">
 
     <style>
-        :root {
-            --bg-dark: #121212;
-            --bg-card: #1E1E1E;
-            --text-main: #E0E0E0;
-            --accent: #BB86FC;
+        :root { --bg: #121212; --card: #1e1e1e; --accent: #BB86FC; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
+        header { padding: 20px; background: var(--card); border-bottom: 2px solid var(--accent); }
+        #drop-zone { 
+            margin: 50px auto; width: 80%; max-width: 500px; height: 200px; 
+            border: 2px dashed #444; border-radius: 20px; display: flex; 
+            align-items: center; justify-content: center; cursor: pointer;
         }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        header {
-            padding: 15px;
-            background: var(--bg-card);
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
-        
-        .brand { color: var(--accent); font-weight: 700; letter-spacing: 1px; }
-
-        #container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            padding: 20px;
-        }
-
-        #drop-area {
-            width: 100%;
-            max-width: 500px;
-            height: 250px;
-            border: 2px dashed #444;
-            background: var(--bg-card);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        #drop-area:hover { border-color: var(--accent); }
-
-        /* PPTX Çıktı Alanı */
-        #result {
-            width: 100%;
-            height: 100%;
-            display: none;
-            background: #fff; /* Slaytlar için beyaz zemin şart */
-            overflow: auto;
-            border-radius: 8px;
-        }
-
-        #loader {
-            display: none;
-            position: absolute;
-            background: rgba(0,0,0,0.85);
-            padding: 20px 40px;
-            border-radius: 50px;
-            color: var(--accent);
-            font-weight: bold;
-            z-index: 99;
-        }
-
-        .controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: none;
-        }
-
-        button {
-            background: var(--accent);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #000;
-        }
+        #result { background: white; margin: 20px; border-radius: 10px; min-height: 500px; display: none; }
+        #loading { display: none; color: var(--accent); margin-top: 20px; }
+        .brand { color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div style="font-size: 1.4rem;"><span class="brand">FIXING</span> VIEWER</div>
-    </header>
+<header><span class="brand">FIXING</span> VIEWER PRO</header>
 
-    <div id="container">
-        <div id="drop-area" onclick="document.getElementById('file-input').click()">
-            <span style="font-size: 40px; margin-bottom: 10px;">📄</span>
-            <b>PPTX Dosyasını Seç veya Sürükle</b>
-            <p style="font-size: 0.8rem; color: #888;">Tarayıcı tabanlı güvenli işleme</p>
-        </div>
+<div id="drop-zone" onclick="document.getElementById('pptx-input').click()">
+    <div>PPTX Dosyasını Buraya Bırak veya Seç</div>
+</div>
 
-        <div id="loader">Fixing Motoru İşliyor...</div>
+<input type="file" id="pptx-input" accept=".pptx" style="display:none;">
+<div id="loading">Fixing Motoru Hazırlanıyor...</div>
+<div id="result"></div>
 
-        <div id="result"></div>
-    </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@master/js/pptxjs.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@master/js/divs2slides.js"></script>
 
-    <div class="controls" id="main-controls">
-        <button onclick="window.location.reload()">Yeni Dosya</button>
-    </div>
+<script>
+    $(document).ready(function() {
+        const $input = $("#pptx-input");
+        const $result = $("#result");
+        const $loading = $("#loading");
 
-    <input type="file" id="file-input" accept=".pptx" style="display:none;">
+        $input.on("change", function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/pptxjs.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/divs2slides.js"></script>
+            $("#drop-zone").hide();
+            $loading.show();
 
-    <script>
-        $(function() {
-            const $fileInput = $("#file-input");
-            const $dropArea = $("#drop-area");
-            const $result = $("#result");
-            const $loader = $("#loader");
-
-            // Dosya Seçildiğinde
-            $fileInput.on("change", function() {
-                if (this.files.length > 0) {
-                    process();
+            // PPTXjs doğrudan file objesiyle bazen sorun yaşayabiliyor
+            // Bu yüzden "fileInputId" üzerinden gitmek en garantisi
+            $result.pptxToHtml({
+                fileInputId: "pptx-input",
+                slideMode: false,
+                keyBoardShortCut: true,
+                success: function() {
+                    $loading.hide();
+                    $result.show();
+                },
+                error: function(err) {
+                    $loading.hide();
+                    alert("Yükleme başarısız. Konsol hatasına bak.");
+                    console.log("Hata detayı:", err);
                 }
             });
-
-            // Sürükle Bırak
-            $dropArea.on("dragover", function(e) {
-                e.preventDefault();
-                $(this).css("background", "#252525");
-            }).on("dragleave", function() {
-                $(this).css("background", "var(--bg-card)");
-            }).on("drop", function(e) {
-                e.preventDefault();
-                const files = e.originalEvent.dataTransfer.files;
-                if (files.length > 0) {
-                    $fileInput[0].files = files;
-                    process();
-                }
-            });
-
-            function process() {
-                $dropArea.hide();
-                $loader.show();
-
-                // Kütüphane Ayarları
-                $result.pptxToHtml({
-                    fileInputId: "file-input",
-                    slideMode: false,
-                    keyBoardShortCut: true,
-                    slideModeConfig: {
-                        first: 1,
-                        nav: true,
-                        navTxtColor: "white",
-                        showSlideNum: true,
-                        showTotalSlideNum: true
-                    },
-                    success: function() {
-                        $loader.hide();
-                        $result.fadeIn();
-                        $("#main-controls").fadeIn();
-                    },
-                    error: function() {
-                        alert("Hata: Dosya işlenemedi. PPTX olduğundan emin olun.");
-                        window.location.reload();
-                    }
-                });
-            }
         });
-    </script>
+    });
+</script>
 </body>
 </html>
+
