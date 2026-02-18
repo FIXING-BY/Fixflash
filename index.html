@@ -3,63 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixing Viewer V3 - Final</title>
+    <title>Fixing Viewer | Web Edition</title>
     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/css/pptxjs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/css/pptxjs.css">
-    
+
     <style>
-        /* SOFT BLACK TEMA */
+        /* FIXING SOFT BLACK TEMA */
         body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
+            padding: 0;
+            background-color: #121212; /* Soft Siyah */
+            color: #E0E0E0;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
-            align-items: center;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Üst Bar */
+        /* Üst Header */
         header {
-            width: 100%;
-            background-color: #1e1e1e;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            z-index: 10;
+            background-color: #1E1E1E;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        h1 { margin: 0; font-weight: 300; letter-spacing: 1px; }
-        .logo { color: #BB86FC; font-weight: bold; }
+        .logo {
+            font-size: 20px;
+            font-weight: 300;
+        }
+        .logo span {
+            color: #BB86FC; /* Fixing Moru */
+            font-weight: bold;
+        }
 
-        /* Ana Alan */
-        #main-container {
+        /* Ana İçerik Alanı */
+        #main-area {
             flex: 1;
-            width: 100%;
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
-            overflow: hidden;
+            background-color: #121212;
         }
 
         /* Sürükle Bırak Kutusu */
         #drop-zone {
-            width: 500px;
-            height: 300px;
-            border: 2px dashed #333;
-            background-color: #1e1e1e;
-            border-radius: 12px;
+            width: 60%;
+            height: 40%;
+            border: 3px dashed #333;
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            cursor: pointer;
+            background-color: #1E1E1E;
             transition: 0.3s;
-            z-index: 20;
+            cursor: pointer;
         }
 
         #drop-zone:hover {
@@ -67,194 +71,203 @@
             background-color: #252525;
         }
 
-        #drop-zone p { color: #888; pointer-events: none; }
-        #drop-zone .icon { font-size: 50px; margin-bottom: 20px; }
+        #drop-zone i {
+            font-size: 60px;
+            color: #BB86FC;
+            margin-bottom: 20px;
+            font-style: normal;
+        }
 
-        /* Görüntüleyici */
-        #result {
+        #drop-zone p {
+            font-size: 18px;
+            color: #888;
+        }
+
+        /* Viewer (Slayt Gösterici) */
+        #viewer-wrapper {
             width: 100%;
             height: 100%;
             display: none; /* Başlangıçta gizli */
-            background-color: #fff; /* Slaytlar için beyaz zemin */
+            background-color: #fff; /* Slaytlar için beyaz zemin şart */
+            overflow: auto;
         }
 
-        /* Kontrol Butonları (Sağ Alt) */
-        .fab-controls {
-            position: fixed;
+        /* Uyarı Kutusu */
+        #warning {
+            position: absolute;
             bottom: 20px;
-            right: 20px;
-            display: none;
-            z-index: 100;
-        }
-
-        .btn {
-            background-color: #BB86FC;
+            background: #CF6679;
             color: #000;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
             font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            margin-left: 10px;
         }
-        .btn:hover { background-color: #9965f4; }
 
         /* Loader */
         .loader {
-            border: 4px solid #333;
-            border-top: 4px solid #BB86FC;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
             display: none;
-            position: absolute;
-            z-index: 50;
+            border: 5px solid #333;
+            border-top: 5px solid #BB86FC;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Hata Mesajı */
-        #debug-log {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            color: red;
-            font-size: 12px;
-            background: rgba(0,0,0,0.8);
-            padding: 5px;
+        /* Dosya Input Gizli */
+        #file-upload { display: none; }
+
+        /* Kapat Butonu */
+        #close-btn {
             display: none;
+            background: #BB86FC;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1><span class="logo">Fixing</span> Viewer</h1>
+        <div class="logo"><span>Fixing</span> Viewer</div>
+        <button id="close-btn" onclick="location.reload()">Kapat</button>
     </header>
 
-    <div id="main-container">
+    <div id="main-area">
         <div id="drop-zone">
-            <div class="icon">📁</div>
-            <p>PPTX dosyasını sürükleyin veya tıklayın</p>
-            <input type="file" id="file-input" accept=".pptx" style="display:none;">
+            <i>📂</i>
+            <p>Dosyayı Buraya Sürükle (Web DD)</p>
+            <span style="font-size:12px; color:#555;">Sadece .pptx</span>
         </div>
 
         <div class="loader" id="loader"></div>
-        
-        <div id="result"></div>
+
+        <div id="viewer-wrapper">
+            <div id="pptx-result"></div>
+        </div>
+
+        <div id="warning"></div>
     </div>
 
-    <div class="fab-controls" id="controls">
-        <button class="btn" onclick="location.reload()">Kapat / Yeni</button>
-        <button class="btn" onclick="toggleFullScreen()">Tam Ekran</button>
-    </div>
-
-    <div id="debug-log"></div>
+    <input type="file" id="file-upload" accept=".pptx">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/pptxjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/divs2slides.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/pptxjs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxjs/1.21.1/js/divs2slides.js"></script>
 
     <script>
         $(document).ready(function() {
-            // Fonksiyon kontrolü (Hata ayıklama için)
-            if (typeof $.fn.pptxToHtml !== 'function') {
-                $('#debug-log').show().text("HATA: Kütüphaneler yüklenemedi. İnternet bağlantınızı kontrol edin.");
+            // PROTOKOL KONTROLÜ
+            if (window.location.protocol === 'file:') {
+                $('#warning').show().html("UYARI: Bu dosyayı masaüstünden açtığınız için çalışmayabilir.<br>Lütfen bir sunucuya (Hosting/Localhost) yükleyin.");
             }
 
             const dropZone = $('#drop-zone');
-            const fileInput = $('#file-input');
-            const resultDiv = $('#result');
+            const fileInput = $('#file-upload');
             const loader = $('#loader');
-            const controls = $('#controls');
+            const viewerWrapper = $('#viewer-wrapper');
+            const closeBtn = $('#close-btn');
 
-            // Tıklama
-            dropZone.on('click', function() {
-                fileInput.click();
-            });
+            // 1. Tıklama
+            dropZone.click(() => fileInput.click());
 
-            // Sürükle Bırak
+            // 2. Drag & Drop Efektleri
             dropZone.on('dragover', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                $(this).css('border-color', '#BB86FC');
+                $(this).css({'border-color': '#BB86FC', 'background': '#252525'});
             });
 
             dropZone.on('dragleave', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                $(this).css('border-color', '#333');
+                $(this).css({'border-color': '#333', 'background': '#1E1E1E'});
             });
 
+            // 3. Dosya Bırakma
             dropZone.on('drop', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                $(this).css('border-color', '#333');
                 
                 const files = e.originalEvent.dataTransfer.files;
-                if(files.length > 0) handleFile(files[0]);
+                if (files.length > 0) {
+                    processFile(files[0]);
+                }
             });
 
-            // Input Değişimi
-            fileInput.on('change', function(e) {
-                if(this.files.length > 0) handleFile(this.files[0]);
+            // 4. Input Değişimi
+            fileInput.change(function() {
+                if (this.files.length > 0) {
+                    processFile(this.files[0]);
+                }
             });
 
-            function handleFile(file) {
+            function processFile(file) {
                 if (!file.name.toLowerCase().endsWith('.pptx')) {
-                    alert("Sadece .pptx dosyası yükleyebilirsiniz.");
+                    alert("Lütfen geçerli bir .pptx dosyası yükleyin.");
                     return;
                 }
 
+                // UI Değişimi
                 dropZone.hide();
                 loader.show();
+                $('#warning').hide();
 
+                // Dosyayı Oku
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Blob oluştur
-                    const blob = new Blob([e.target.result], { type: file.type });
-                    const url = URL.createObjectURL(blob);
-
-                    // PPTX Yükle
                     try {
-                        $("#result").pptxToHtml({
+                        // Blob URL Oluştur (Web Standartı)
+                        const blob = new Blob([e.target.result], { type: file.type });
+                        const url = URL.createObjectURL(blob);
+
+                        // PPTXJS Başlat
+                        $("#pptx-result").pptxToHtml({
                             pptxFileUrl: url,
-                            slidesScale: "100%", 
-                            slideMode: false, 
-                            keyBoardShortCut: true
+                            slideMode: false,
+                            keyBoardShortCut: true,
+                            mediaProcess: true,
+                            slideModeConfig: {
+                                first: 1, 
+                                nav: true, 
+                                navTxtColor: "black", 
+                                showSlideNum: false, 
+                                showTotalSlideNum: false, 
+                                autoSlide: false, 
+                                randomAutoSlide: false, 
+                                loop: false, 
+                                background: "white", 
+                                transition: "default", 
+                                transitionTime: 1
+                            }
                         });
 
-                        // Yükleme tamamlandığında (manuel delay çünkü kütüphanede callback bazen çalışmıyor)
-                        setTimeout(function() {
+                        // Yükleme Tamamlanınca
+                        setTimeout(() => {
                             loader.hide();
-                            resultDiv.fadeIn();
-                            controls.fadeIn();
-                        }, 1500);
+                            viewerWrapper.fadeIn();
+                            closeBtn.show();
+                        }, 2000);
 
-                    } catch (err) {
+                    } catch (error) {
                         loader.hide();
                         dropZone.show();
-                        alert("Dosya işlenirken hata: " + err.message);
+                        alert("Hata: Web sunucusunda çalıştığınızdan emin olun.\n" + error);
                     }
                 };
                 reader.readAsArrayBuffer(file);
             }
         });
-
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
     </script>
 </body>
 </html>
+
